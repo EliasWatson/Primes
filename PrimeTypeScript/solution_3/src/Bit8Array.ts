@@ -12,19 +12,17 @@ export class Bit8Array extends IBitArray {
     return '8bit-array';
   }
 
+  // Unlike Bit32Array the `& 7` is not redundant here: shift counts are taken
+  // modulo 32, not modulo 8.
   public get(i: number) {
-    // const ixByte = ~~(i / 8); // Same as math.truc, but fast
-    const ixByte = i >> 3; // Integer divide by 8
-    const ixBit = i % 8;
-    const byte = this.bits[ixByte];
-    return (byte & (1 << ixBit)) ? 1 : 0;
+    return (this.bits[i >> 3] >> (i & 7)) & 1;
   }
 
   public setTrue(i: number) {
-    // const ixByte = ~~(i / 8);
+    const bits = this.bits;
     const ixByte = i >> 3; // Integer divide by 8
-    const ixBit = i % 8;
-    this.bits[ixByte] = this.bits[ixByte] | (1 << ixBit);
+    const ixBit = i & 7;
+    bits[ixByte] = bits[ixByte] | (1 << ixBit);
   }
 
   public get bitsPerFlag() {

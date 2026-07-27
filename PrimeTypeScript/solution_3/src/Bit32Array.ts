@@ -12,19 +12,17 @@ export class Bit32Array extends IBitArray {
     return '32bit-array';
   }
 
+  // JS shift counts are taken modulo 32, so `1 << i` already selects bit
+  // `i % 32` and the explicit mask is redundant. Every bitwise operator lowers
+  // to a runtime helper call under scriptc, so dropping it is worth real time.
   public get(i: number) {
-    // const ixByte = ~~(i / 8); // Same as math.truc, but fast
-    const ixByte = i >> 5; // Integer divide by 32
-    const ixBit = i % 32;
-    const byte = this.bits[ixByte];
-    return (byte & (1 << ixBit)) ? 1 : 0;
+    return (this.bits[i >> 5] >> i) & 1;
   }
 
   public setTrue(i: number) {
-    // const ixByte = ~~(i / 8);
+    const bits = this.bits;
     const ixByte = i >> 5; // Integer divide by 32
-    const ixBit = i % 32;
-    this.bits[ixByte] = this.bits[ixByte] | (1 << ixBit);
+    bits[ixByte] = bits[ixByte] | (1 << i);
   }
 
   public get bitsPerFlag() {

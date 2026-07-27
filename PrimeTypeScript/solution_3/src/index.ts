@@ -17,23 +17,25 @@ const DICT: { [size: number]: number } = {
   10000000000: 455052511,
 };
 
-class PrimeSieve {
+class PrimeSieve<T extends IBitArray> {
   public readonly sieveSize: number;
 
   constructor(
-    private readonly bits: IBitArray
+    private readonly bits: T
   ) {
     this.sieveSize = bits.size;
   }
 
   public runSieve() {
+    const bits = this.bits;
+    const sieveSize = this.sieveSize;
     let factor = 3;
 
     // Equivalent to `factor <= Math.sqrt(sieveSize)` for integers;
     // scriptc has no static lowering for Math.sqrt.
-    while (factor * factor <= this.sieveSize) {
-      for (let num = factor; num < this.sieveSize; num += 2) {
-        if (!this.bits.get(num)) {
+    while (factor * factor <= sieveSize) {
+      for (let num = factor; num < sieveSize; num += 2) {
+        if (!bits.get(num)) {
           factor = num;
           break;
         }
@@ -41,8 +43,8 @@ class PrimeSieve {
 
       const inc = factor * 2; // increased speed
 
-      for (let num = factor * factor; num < this.sieveSize; num += inc) {
-        this.bits.setTrue(num);
+      for (let num = factor * factor; num < sieveSize; num += inc) {
+        bits.setTrue(num);
       }
 
       factor += 2;
@@ -67,10 +69,12 @@ class PrimeSieve {
   }
 
   private countPrimes(): number {
+    const bits = this.bits;
+    const sieveSize = this.sieveSize;
     let count = 1;
 
-    for (let num = 3; num < this.sieveSize; num += 2) {
-      if (!this.bits.get(num)) count++;
+    for (let num = 3; num < sieveSize; num += 2) {
+      if (!bits.get(num)) count++;
     }
 
     return count;
@@ -85,11 +89,11 @@ let passes = 0;
 let startTime = Date.now();
 const sieveSize = 1e6;
 
-function runOne(createArray: (sieveSize: number) => IBitArray, sieveSize: number) {
+function runOne<T extends IBitArray>(createArray: (sieveSize: number) => T, sieveSize: number) {
   passes = 0;
   startTime = Date.now();
   while (true) {
-    const bitArray: IBitArray = createArray(sieveSize);
+    const bitArray: T = createArray(sieveSize);
     const sieve = new PrimeSieve(bitArray);
     sieve.runSieve();
   
@@ -103,10 +107,10 @@ function runOne(createArray: (sieveSize: number) => IBitArray, sieveSize: number
 }
 
 function main() {
-  runOne((sieveSize: number): IBitArray => {return new Bit32Array(sieveSize)}, sieveSize);
-  runOne((sieveSize: number): IBitArray => {return new Bit8Array(sieveSize)}, sieveSize);
-  runOne((sieveSize: number): IBitArray => {return new BitNumArray(sieveSize)}, sieveSize);
-  runOne((sieveSize: number): IBitArray => {return new BitByteArray(sieveSize)}, sieveSize);
+  runOne((sieveSize: number) => {return new Bit32Array(sieveSize)}, sieveSize);
+  runOne((sieveSize: number) => {return new Bit8Array(sieveSize)}, sieveSize);
+  runOne((sieveSize: number) => {return new BitNumArray(sieveSize)}, sieveSize);
+  runOne((sieveSize: number) => {return new BitByteArray(sieveSize)}, sieveSize);
 }
 
 main();
