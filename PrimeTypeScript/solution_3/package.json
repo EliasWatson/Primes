@@ -1,0 +1,21 @@
+{
+  "name": "solution_3",
+  "version": "1.0.0",
+  "description": "Sieve of Eratosthenes in TypeScript, compiled to a native binary with scriptc",
+  "private": true,
+  "scripts": {
+    "build": "scriptc build src/index.ts -o ./primes",
+    "start": "./primes",
+    "dev": "scriptc run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "coverage": "scriptc coverage src/index.ts",
+    "clean": "rm -rf ./primes ./index.ll ./.scriptc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "scriptc": "^0.0.17",
+    "typescript": "^5.9.2"
+  }
+}
