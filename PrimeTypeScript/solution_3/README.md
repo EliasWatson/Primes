@@ -156,6 +156,52 @@ What the binary does buy is startup and footprint: measured over 100 runs of a
 against node's 19.2 ms, and the sieve executable is a ~370 KB file with no
 runtime dependencies.
 
+### Memory
+
+Peak resident set size, `/usr/bin/time -l`, same machine. Running the whole
+benchmark end to end, scriptc looks *worse*:
+
+| run | solution_2 / node | this / scriptc | ratio |
+| --- | ----------------: | -------------: | ----: |
+| 1   |         356.6 MiB |      501.6 MiB | 1.41× |
+| 2   |         355.9 MiB |      501.6 MiB | 1.41× |
+| 3   |         354.4 MiB |      501.5 MiB | 1.42× |
+
+That headline number is set by a single variant. Measuring each one on its own —
+`main()` patched to call one `runOne` — splits cleanly in two:
+
+| variant        | node      | this / scriptc | ratio     |
+| -------------- | --------: | -------------: | --------- |
+| `32bit-array`  | 135.2 MiB |        1.8 MiB | 75× less  |
+| `8bit-array`   | 138.2 MiB |        1.6 MiB | 86× less  |
+| `number-array` | 226.0 MiB |      501.4 MiB | 2.2× more |
+| `byte-array`   | 180.8 MiB |        2.5 MiB | 72× less  |
+
+On the three typed-array variants the binary sits at 1.6–2.5 MiB and never
+moves — RSS is flat across 450–1500 passes, so each `Uint8Array`/`Uint32Array`
+is released as soon as the pass that allocated it ends. Node cannot get near
+that: `node -e 'console.log("x")'` already costs 42.7 MiB before any sieve runs.
+
+`BitNumArray` is the exception, and it is a leak. Peak RSS against pass count:
+
+| passes  |    1 |    2 |    5 |   10 |    20 |    40 |    80 |   160 |
+| ------- | ---: | ---: | ---: | ---: | ----: | ----: | ----: | ----: |
+| MiB     | 11.2 | 20.9 | 43.9 | 80.2 | 156.8 | 309.9 | 501.3 | 503.4 |
+
+That is 7.66 MiB per pass, which is exactly one `number[]` of 10⁶ doubles
+(10⁶ × 8 B = 7.63 MiB) retained and never reclaimed. Unlike the typed arrays,
+nothing releases it per pass.
+
+The growth does stop, though — at roughly 503 MiB the runtime finally collects
+and the number holds. Running the variant for 1 s, 15 s and 30 s (110, 1901 and
+3745 passes, 34× the work) gives 503.4 MiB in all three cases. So it is a
+collector that does not trigger until ~500 MiB rather than an unbounded leak,
+which is also why V8 peaks at less than half that on the same variant: it
+collects the identical garbage far earlier.
+
+Because all four variants share one process, that one phase sets the peak for
+the whole run and hides the 70–86× win on the other three.
+
 ## Author
 
 - Original SOLUTION_2
