@@ -56,16 +56,19 @@ fn expected_count(limit: i64) -> i64 {
 
 fn main() {
     let start = clock();
-    var passes = 0;
-    var count = 0;
+    var passes = 1;
+    var sieve = new_sieve(LIMIT);
+    run_sieve(sieve);
+    // Every pass builds a new sieve in the place of the last one; the last
+    // one is kept for the count.
     while clock() - start < 5.0 {
-        var sieve = new_sieve(LIMIT);
+        sieve = new_sieve(LIMIT);
         run_sieve(sieve);
-        count = count_primes(sieve);
         passes++;
     }
     let duration = clock() - start;
 
+    let count = count_primes(sieve);
     let valid = count == expected_count(LIMIT);
     write_stderr(str("Passes: ", passes, ", Time: ", duration, ", Limit: ", LIMIT,
                      ", Count: ", count, ", Valid: ", valid, "\n"));

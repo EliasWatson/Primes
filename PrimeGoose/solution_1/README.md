@@ -39,5 +39,5 @@ goose build primes.goose
 ## Output
 
 ```
-eliaswatson;9176;5.000316;1;algorithm=base,faithful=yes,bits=8
+eliaswatson;10670;5.000153;1;algorithm=base,faithful=yes,bits=8
 ```
